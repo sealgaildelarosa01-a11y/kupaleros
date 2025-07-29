@@ -13,8 +13,8 @@ app.listen(3000, () => console.log('Keep-alive server running on port 3000'));
 
 // Create bot
 const bot = createClient({
-  host: 'lootboxphh.aternos.me',
-  port: 44399,
+  host: 'mcroyalee.aternos.me',
+  port: 57206,
   username: 'Noxell',
   offline: true,
   version: '1.21.93'
