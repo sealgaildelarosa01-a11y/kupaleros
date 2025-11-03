@@ -13,11 +13,11 @@ app.listen(3000, () => console.log('Keep-alive server running on port 3000'));
 
 // Create bot
 const bot = createClient({
-  host: 'mcroyaleee.aternos.me',
-  port: 57206,
+  host: 'kupaleros-rg1D.aternos.me',
+  port: 40915,
   username: 'Noxell',
   offline: true,
-  version: '1.21.93'
+  version: '1.21.120'
 });
 
 let isNight = false;
