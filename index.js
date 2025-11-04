@@ -13,16 +13,6 @@ app.listen(3000, () => console.log('Keep-alive server running on port 3000'));
 
 // Create bot
 
-    const { createClient } = require('bedrock-protocol');
-
-const config = {
-  host: 'kupaleros-rg1D.aternos.me',
-  port: 40915,
-  username: 'Noxell',
-  offline: true,
-  version: '1.21.120'
-};
-
 const { createClient } = require('bedrock-protocol');
 
 const config = {
@@ -33,59 +23,27 @@ const config = {
   version: '1.21.120'
 };
 
-let bot;
-let reconnectTimeout = null;
-
 function startBot() {
-  console.log('[BOT] Starting connection...');
-
-  try {
-    bot = createClient(config);
-  } catch (e) {
-    console.error('[BOT] Failed to create client:', e);
-    return scheduleReconnect();
-  }
+  console.log('Connecting to server...');
+  const bot = createClient(config);
 
   bot.on('join', () => {
-    console.log('[BOT] ✅ Connected to server.');
+    console.log('Bot connected to server!');
   });
 
-  bot.on('disconnect', (packet) => {
-    console.log('[BOT] ❌ Disconnected:', packet);
-    scheduleReconnect();
+  bot.on('disconnect', (reason) => {
+    console.log('Bot disconnected:', reason);
+    console.log('Reconnecting in 5 seconds...');
+    setTimeout(startBot, 5000);
   });
 
   bot.on('error', (err) => {
-    console.error('[BOT] ⚠️ Error:', err.message);
-    scheduleReconnect();
-  });
-
-  bot.on('close', () => {
-    console.log('[BOT] Connection closed.');
-    scheduleReconnect();
+    console.log('Error:', err.message);
+    console.log('Reconnecting in 5 seconds...');
+    setTimeout(startBot, 5000);
   });
 }
 
-function scheduleReconnect() {
-  if (reconnectTimeout) clearTimeout(reconnectTimeout);
-  console.log('[BOT] Reconnecting in 10 seconds...');
-  reconnectTimeout = setTimeout(() => {
-    startBot();
-  }, 10000);
-}
-
-// Prevent app from crashing on uncaught errors
-process.on('uncaughtException', (err) => {
-  console.error('[BOT] Uncaught exception:', err);
-  scheduleReconnect();
-});
-
-process.on('unhandledRejection', (reason) => {
-  console.error('[BOT] Unhandled rejection:', reason);
-  scheduleReconnect();
-});
-
-// Start first connection
 startBot();
 
 let isNight = false;
