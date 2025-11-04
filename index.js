@@ -13,33 +13,26 @@ app.listen(3000, () => console.log('Keep-alive server running on port 3000'));
 
 // Create bot
 
-const { createClient } = require('bedrock-protocol');
-
-const config = {
-  host: 'kupaleros-rg1D.aternos.me',
-  port: 40915,
-  username: 'Noxell',
-  offline: true,
-  version: '1.21.120'
-};
-
 function startBot() {
-  console.log('Connecting to server...');
-  const bot = createClient(config);
+  console.log('Connecting...');
 
-  bot.on('join', () => {
-    console.log('Bot connected to server!');
+  const bot = createClient({
+    host: 'kupaleros-rg1D.aternos.me',
+    port: 40915,
+    username: 'Noxell',
+    offline: true,
+    version: '1.21.120'
   });
 
-  bot.on('disconnect', (reason) => {
-    console.log('Bot disconnected:', reason);
-    console.log('Reconnecting in 5 seconds...');
+  bot.on('join', () => console.log('Connected!'));
+
+  bot.on('disconnect', (r) => {
+    console.log('Disconnected:', r);
     setTimeout(startBot, 5000);
   });
 
-  bot.on('error', (err) => {
-    console.log('Error:', err.message);
-    console.log('Reconnecting in 5 seconds...');
+  bot.on('error', (e) => {
+    console.log('Error:', e.message);
     setTimeout(startBot, 5000);
   });
 }
