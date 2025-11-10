@@ -6,13 +6,14 @@ const bot = createClient({
   port: 40915,
   username: 'Noxell',
   offline: true,
-  version: '1.21.120',
-  default_command_permission: 0, // optional
-  gamemode: 0 // 0 = Survival
+  version: '1.21.120'
 });
 
+// Detect gamemode after spawn
 bot.on('spawn', () => {
   console.log('Bot spawned! Starting AI behaviors...');
+  // default to survival, can change later if server says creative
+  bot.gamemode = 0; 
   behaviorManager(bot);
 });
 
