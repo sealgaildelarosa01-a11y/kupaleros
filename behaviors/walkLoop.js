@@ -1,11 +1,12 @@
 // behaviors/walkLoop.js
+
 module.exports = function walkLoop(bot) {
   if (!bot?.entity?.position) return;
 
-  // Initialize random direction if undefined
+  // Initialize pathYaw if undefined
   if (!bot.pathYaw) bot.pathYaw = Math.random() * 360;
 
-  const speed = 0.2; // movement per tick
+  const speed = 0.3; // movement per tick
   const rad = bot.pathYaw * (Math.PI / 180);
 
   const dx = Math.sin(rad) * speed;
@@ -15,7 +16,7 @@ module.exports = function walkLoop(bot) {
   const newPos = {
     x: pos.x + dx,
     y: pos.y,
-    z: pos.z + dz
+    z: pos.z + dz,
   };
 
   try {
@@ -25,17 +26,18 @@ module.exports = function walkLoop(bot) {
       pitch: 0,
       yaw: bot.pathYaw,
       head_yaw: bot.pathYaw,
-      mode: 0,
+      mode: 1,       // TELEPORT mode works in Creative
       on_ground: true,
       riding_runtime_id: 0,
-      teleportation_cause: 0
+      teleportation_cause: 0,
+      teleportation_item: 0
     });
 
-    // Update local cache
+    // Update local position cache
     bot.entity.position = newPos;
 
-    // Log every step
-    console.log(`[WalkLoop] Walking to x:${newPos.x.toFixed(2)} z:${newPos.z.toFixed(2)}`);
+    // Log movement
+    console.log(`[WalkLoop] Moving to x:${newPos.x.toFixed(2)} z:${newPos.z.toFixed(2)}`);
   } catch (err) {
     console.log('WalkLoop error:', err.message);
   }
