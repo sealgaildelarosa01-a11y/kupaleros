@@ -1,20 +1,30 @@
 const { createClient } = require('bedrock-protocol');
 const behaviorManager = require('./behaviors/behaviorManager');
 
-// Connect to local Survival server
+// --- Microsoft (Xbox) Login ---
 const bot = createClient({
-  host: 'kupaleros-rg1D.aternos.me',       // Local server
-  port: 40915,             // Default Bedrock port
-  username: 'Noxell',
-  offline: true,           // Offline mode
-  version: '1.21.120'
+  host: 'kupaleros-rg1D.aternos.me',  // Your server IP
+  port: 40915,                         // Your server port
+  username: 'sealgaildelarosa20@gmail.com',    // Microsoft email
+  password: 'Codezyy@72443', // Microsoft password
+  auth: 'microsoft',                   // Enables Xbox login
+  version: '1.21.120'                  // Your Minecraft Bedrock version
 });
 
+// --- Events ---
 bot.on('spawn', () => {
-  console.log('Bot spawned! Starting AI behaviors...');
+  console.log('✅ Bot spawned successfully! Starting AI behaviors...');
   behaviorManager(bot);
 });
 
-bot.on('error', err => console.log('Bot error:', err));
-bot.on('kick', packet => console.log('Kicked:', packet.reason));
-bot.on('text', packet => console.log(`[Server] ${packet.message}`));
+bot.on('text', packet => {
+  console.log(`[Server] ${packet.message}`);
+});
+
+bot.on('kick', packet => {
+  console.log('❌ Kicked from server:', packet.reason);
+});
+
+bot.on('error', err => {
+  console.log('⚠️ Bot error:', err);
+});
