@@ -1,12 +1,13 @@
 // behaviorManager.js
-const walkLoop = require('./walkLoop');       // inside behaviors/
+const walkLoop = require('./walkLoop');       
 const {
   handleNightSafety,
   handleLostSafety,
   handleHunger,
   handleMobAvoidance,
-  respawnIfDead
-} = require('./handlers');                     // inside behaviors/
+  respawnIfDead,
+  handlePathing
+} = require('./handlers');                     
 
 module.exports = function behaviorManager(bot) {
   let activeBehavior = null;
@@ -15,9 +16,9 @@ module.exports = function behaviorManager(bot) {
   function switchBehavior(name, fn) {
     if (activeBehavior !== name) {
       activeBehavior = name;
-      fn();
       console.log(`[Behavior] Switched to: ${name}`);
     }
+    try { fn(bot); } catch (e) { console.log('Behavior error:', e.message); }
   }
 
   // Randomly change pathing direction every 5s
@@ -29,55 +30,24 @@ module.exports = function behaviorManager(bot) {
   setInterval(() => {
     if (!bot || !bot.entity) return;
 
-    if (cooldown > 0) {
-      cooldown--;
-      return;
-    }
+    // Respawn if dead
+    if (respawnIfDead(bot)) return switchBehavior('respawn', () => {});
 
-    // 1️⃣ Respawn if dead
-    if (respawnIfDead(bot)) {
-      switchBehavior('respawn', () => console.log('Respawning...'));
-      cooldown = 20;
-      return;
-    }
+    // Lost safety
+    if (handleLostSafety(bot)) return switchBehavior('lostSafety', () => {});
 
-    // 2️⃣ Lost safety
-    if (handleLostSafety(bot)) {
-      switchBehavior('lostSafety', () => console.log('Finding safe spot...'));
-      cooldown = 20;
-      return;
-    }
+    // Hunger
+    if (handleHunger(bot)) return switchBehavior('hunger', () => {});
 
-    // 3️⃣ Hunger
-    if (handleHunger(bot)) {
-      switchBehavior('hunger', () => console.log('Eating food...'));
-      cooldown = 20;
-      return;
-    }
+    // Night safety
+    if (handleNightSafety(bot)) return switchBehavior('nightSafety', () => {});
 
-    // 4️⃣ Night safety
-    if (handleNightSafety(bot)) {
-      switchBehavior('nightSafety', () => console.log('Seeking safe place at night...'));
-      cooldown = 20;
-      return;
-    }
+    // Mob avoidance
+    if (handleMobAvoidance(bot)) return switchBehavior('mobAvoidance', () => {});
 
-    // 5️⃣ Mob avoidance
-    if (handleMobAvoidance(bot)) {
-      switchBehavior('mobAvoidance', () => console.log('Avoiding mobs...'));
-      cooldown = 20;
-      return;
-    }
-
-    // 6️⃣ Pathing / walking
-    if (activeBehavior !== 'pathing') {
-      switchBehavior('pathing', () => console.log('Starting pathing...'));
-    }
-
-    if (activeBehavior === 'pathing') {
-      walkLoop(bot); // continuously move bot
-      cooldown = 0;
-    }
+    // Default pathing / walking
+    switchBehavior('pathing', handlePathing); 
+    walkLoop(bot); // continuously move bot
 
   }, 50); // 20 ticks per second
 };
