@@ -1,5 +1,5 @@
 const { createClient } = require('bedrock-protocol');
-const behaviorManager = require('./behaviors/behaviorManager');
+const walkLoop = require('./behaviors/walkLoop');
 
 const bot = createClient({
   host: 'kupaleros-rg1D.aternos.me',
