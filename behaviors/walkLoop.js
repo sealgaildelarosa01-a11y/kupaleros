@@ -1,19 +1,21 @@
 // walkLoop.js
 module.exports = function walkLoop(bot) {
-  const speed = 0.2; // movement speed per tick
-  const yaw = bot.pathYaw !== undefined ? bot.pathYaw : 0; // use current bot yaw
-
   if (!bot.entity || !bot.entity.position) return;
 
-  // Calculate forward velocity based on yaw
-  const rad = (yaw * Math.PI) / 180;
+  // Initialize yaw if not set
+  if (bot.pathYaw === undefined) bot.pathYaw = Math.random() * 360;
+
+  const speed = 0.4; // movement speed per tick
+  const rad = (bot.pathYaw * Math.PI) / 180;
+
+  // Calculate velocity
   const velocity = {
     x: Math.cos(rad) * speed,
     y: 0,
     z: Math.sin(rad) * speed,
   };
 
-  // Update server about our motion
+  // Send motion to server
   bot.queue('set_actor_motion', {
     runtime_entity_id: bot.entity.runtime_id,
     motion: velocity,
@@ -31,13 +33,12 @@ module.exports = function walkLoop(bot) {
     runtime_entity_id: bot.entity.runtime_id,
     position: newPos,
     pitch: 0,
-    yaw: yaw,
-    head_yaw: yaw,
+    yaw: bot.pathYaw,
+    head_yaw: bot.pathYaw,
     mode: 0,
     on_ground: true,
     ridden_runtime_id: 0,
   });
 
-  // Update local position
-  bot.entity.position = newPos;
+  console.log('Walking yaw:', bot.pathYaw.toFixed(1));
 };
