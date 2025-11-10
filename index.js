@@ -4,7 +4,7 @@ const fs = require('fs');
 
 // Load behavior functions
 const { handleNightSafety, handleHunger, handleMobAvoidance, handlePathing, respawnIfDead } = require('./behaviors');
-const walkLoop = require('./behaviors/walkLoop');
+const behaviorManager = require('./behaviors/behaviorManager');
 
 // Create a basic Express server to keep the bot alive
 const app = express();
