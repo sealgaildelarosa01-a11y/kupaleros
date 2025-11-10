@@ -5,6 +5,8 @@ const bot = bedrock.createClient({
   host: 'kupaleros-rg1D.aternos.me',
   port: 40915,
   username: 'Noxell'
+  offline: true,
+  version: '1.21.120'
 });
 
 bot.on('spawn', () => {
