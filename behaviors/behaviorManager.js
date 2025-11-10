@@ -1,22 +1,15 @@
 // behaviors/behaviorManager.js
 const walkLoop = require('./walkLoop');
-const { handleHunger, handleLostSafety, handleMobAvoidance, handleNightSafety, respawnIfDead } = require('./handlers');
+const { handleNightSafety, handleLostSafety, handleHunger, handleMobAvoidance, respawnIfDead, handlePathing } = require('./handlers');
 
 module.exports = function behaviorManager(bot) {
-  console.log('BehaviorManager running');
 
-  // Random pathYaw for roaming
+  // Walk loop every 50ms
   setInterval(() => {
-    bot.pathYaw = Math.random() * 360;
-  }, 5000);
-
-  // Continuous walking
-  setInterval(() => {
-    if (!bot?.entity?.position) return;
     walkLoop(bot);
   }, 50);
 
-  // Other behaviors every 1s
+  // AI checks every 1s
   setInterval(() => {
     if (!bot?.entity) return;
 
