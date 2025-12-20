@@ -4,7 +4,7 @@ const bot = createClient({
   host: 'kupaleros-rg1D.aternos.me', // 🧠 Use localhost or LAN server (not Aternos)
   port: 40915,       // Default Bedrock port
   offline: true,     // Offline mode must be enabled
-  version: '1.21.13'0',
+  version: '1.21.130',
   username: 'Noxell'
 });
 
