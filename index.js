@@ -5,8 +5,8 @@ const http = require('http')
    CONFIG
    ====================== */
 const CONFIG = {
-  host: 'kupaleros-rg1D.aternos.me',
-  port: 40915,
+  host: 'metacoresrv.aternos.me',
+  port: 36614,
   username: 'Noxell',
   version: '1.21.120',
   offline: true
