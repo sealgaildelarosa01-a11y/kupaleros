@@ -14,36 +14,47 @@ const BASE_CONFIG = {
 const BOT_A = { ...BASE_CONFIG, username: 'Noxella' }
 const BOT_B = { ...BASE_CONFIG, username: 'Noxellb' }
 
-const JOIN_TIME = 18 * 60 * 1000 // 18 minutes
+const JOIN_TIME = 18 * 60 * 1000   // 18 minutes
 const SWITCH_TIME = 15 * 60 * 1000 // 15 minutes
+const RECONNECT_DELAY = 15000     // 15 sec
 
 let activeBot = null
 let activeName = null
+let activeConfig = null
+
 let walkInterval = null
+let reconnectTimer = null
+let intentionalStop = false
 
 /* ======================
    START BOT
    ====================== */
 function startBot(config, name) {
   console.log(`🚀 Starting ${name}...`)
+  activeConfig = config
+
   const bot = createClient(config)
 
   bot.on('spawn', () => {
     console.log(`✅ ${name} spawned`)
+    intentionalStop = false
     startWalkLoop(bot, name)
   })
 
-  bot.on('text', p => {
-    console.log(`[${name}] ${p.message}`)
-  })
+  const handleDisconnect = (reason) => {
+    if (intentionalStop) return
+    if (name !== activeName) return
 
-  bot.on('kick', p => {
-    console.log(`❌ ${name} kicked:`, p.reason)
-  })
+    console.log(`🔄 ${name} reconnecting in 15s... Reason:`, reason)
 
-  bot.on('error', e => {
-    console.log(`⚠️ ${name} error:`, e.message)
-  })
+    clearTimeout(reconnectTimer)
+    reconnectTimer = setTimeout(() => {
+      activeBot = startBot(activeConfig, activeName)
+    }, RECONNECT_DELAY)
+  }
+
+  bot.on('kick', p => handleDisconnect(p.reason))
+  bot.on('error', e => handleDisconnect(e.message))
 
   return bot
 }
@@ -54,7 +65,9 @@ function startBot(config, name) {
 function stopBot() {
   if (!activeBot) return
 
+  intentionalStop = true
   console.log(`👋 ${activeName} leaving server`)
+
   clearInterval(walkInterval)
   walkInterval = null
 
@@ -67,7 +80,7 @@ function stopBot() {
 }
 
 /* ======================
-   WALK LOOP
+   WALK LOOP (HUMAN-LIKE)
    ====================== */
 function startWalkLoop(bot, name) {
   let angle = Math.random() * Math.PI * 2
@@ -107,27 +120,27 @@ function startWalkLoop(bot, name) {
    BOT ROTATION LOGIC
    ====================== */
 function startRotation() {
-  // Start BOT A first
-  activeBot = startBot(BOT_A, 'BOT_A')
+  // Start BOT A
   activeName = 'BOT_A'
+  activeBot = startBot(BOT_A, 'BOT_A')
 
-  // After 15 min → switch to BOT B
+  // Switch to BOT B after 15 minutes
   setTimeout(() => {
     stopBot()
-    activeBot = startBot(BOT_B, 'BOT_B')
     activeName = 'BOT_B'
+    activeBot = startBot(BOT_B, 'BOT_B')
   }, SWITCH_TIME)
 
-  // Full loop every 18 min
+  // Continue rotating every 18 minutes
   setInterval(() => {
     stopBot()
 
     if (activeName === 'BOT_A') {
-      activeBot = startBot(BOT_B, 'BOT_B')
       activeName = 'BOT_B'
+      activeBot = startBot(BOT_B, 'BOT_B')
     } else {
-      activeBot = startBot(BOT_A, 'BOT_A')
       activeName = 'BOT_A'
+      activeBot = startBot(BOT_A, 'BOT_A')
     }
   }, JOIN_TIME)
 }
@@ -141,7 +154,7 @@ http.createServer((req, res) => {
   res.writeHead(200)
   res.end('Minecraft Bedrock bot rotation running ✅')
 }).listen(PORT, '0.0.0.0', () => {
-  console.log(`🌐 HTTP server on ${PORT}`)
+  console.log(`🌐 HTTP server running on port ${PORT}`)
 })
 
 /* ======================
