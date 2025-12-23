@@ -1,158 +1,54 @@
 const { createClient } = require('bedrock-protocol');
 
-/* ======================
-   CONFIG
-   ====================== */
-const BASE_CONFIG = {
-  host: 'kupaleros-rg1D.aternos.me',
-  port: 40915,
-  offline: true,
-  version: '1.21.120'
-};
+const bot = createClient({
+  host: 'kupaleros-rg1D.aternos.me', // 🧠 Use localhost or LAN server (not Aternos)
+  port: 40915,       // Default Bedrock port
+  offline: true,     // Offline mode must be enabled
+  version: '1.21.120',
+  username: 'Noxell'
+});
 
-const BOT_A = { ...BASE_CONFIG, username: 'Noxell' };
-const BOT_B = { ...BASE_CONFIG, username: 'Noxell_2' };
+bot.on('spawn', () => {
+  console.log('✅ Bot spawned! Starting walk loop...');
+  startWalkLoop(bot);
+});
 
-const JOIN_TIME = 18 * 60 * 1000;   // 18 minutes
-const SWITCH_TIME = 15 * 60 * 1000; // 15 minutes
-const SWITCH_COOLDOWN = 30 * 1000;  // 30 seconds (VERY IMPORTANT)
-const RECONNECT_DELAY = 30000;      // 30 seconds
+bot.on('text', p => console.log(`[Server] ${p.message}`));
+bot.on('kick', p => console.log('Kicked:', p.reason));
+bot.on('error', e => console.log('Error:', e.message));
 
-/* ======================
-   STATE
-   ====================== */
-let activeBot = null;
-let activeName = null;
-let activeConfig = null;
+function startWalkLoop(bot) {
+  let tick = 0;
+  let angle = 0;
 
-let afkInterval = null;
-let reconnectTimer = null;
-let intentionalStop = false;
+  setInterval(() => {
+    if (!bot?.entity?.position) return;
 
-/* ======================
-   CREATE BOT
-   ====================== */
-function createBot(config, name) {
-  console.log(`🚀 Starting ${name}...`);
-  activeConfig = config;
+    const pos = bot.entity.position;
+    const speed = 0.3;
 
-  const bot = createClient(config);
+    // Walk in a smooth circle
+    angle += Math.PI / 12;
+    const newX = pos.x + Math.cos(angle) * speed;
+    const newZ = pos.z + Math.sin(angle) * speed;
 
-  bot.on('spawn', () => {
-    console.log(`✅ ${name} spawned (AFK SAFE)`);
-    intentionalStop = false;
-    startAfkLoop(bot, name);
-  });
+    const newPos = { x: newX, y: pos.y, z: newZ };
 
-  bot.on('text', p => {
-    console.log(`[${name}] ${p.message}`);
-  });
-
-  const handleDisconnect = (reason) => {
-    if (intentionalStop) return;
-    if (name !== activeName) return;
-
-    console.log(`🔄 ${name} reconnecting in 30s... Reason:`, reason);
-
-    clearTimeout(reconnectTimer);
-    reconnectTimer = setTimeout(() => {
-      activeBot = createBot(activeConfig, activeName);
-    }, RECONNECT_DELAY);
-  };
-
-  bot.on('kick', p => handleDisconnect(p.reason));
-  bot.on('error', e => handleDisconnect(e.message));
-
-  return bot;
-}
-
-/* ======================
-   STOP BOT (CLEAN)
-   ====================== */
-function stopBot() {
-  if (!activeBot) return;
-
-  intentionalStop = true;
-  console.log(`👋 ${activeName} leaving server`);
-
-  clearInterval(afkInterval);
-  afkInterval = null;
-
-  try {
-    activeBot.disconnect();
-  } catch {}
-
-  activeBot = null;
-  activeName = null;
-}
-
-/* ======================
-   100% AFK SAFE LOOP
-   ====================== */
-function startAfkLoop(bot, name) {
-  console.log(`🛡️ ${name} AFK keep-alive enabled`);
-
-  afkInterval = setInterval(() => {
-    if (!bot?.entity?.runtime_id || !bot?.entity?.position) return;
-
-    // Very small, safe keep-alive (sneak pulse)
-    bot.queue('player_action', {
+    bot.queue('move_player', {
       runtime_id: bot.entity.runtime_id,
-      action: 1, // START_SNEAK
-      position: bot.entity.position,
-      result_position: bot.entity.position
+      position: newPos,
+      pitch: 0,
+      yaw: (angle * 180) / Math.PI,
+      head_yaw: (angle * 180) / Math.PI,
+      mode: 0,
+      on_ground: true,
+      riding_runtime_id: 0,
+      teleportation_cause: 0,
+      teleportation_item: 0
     });
 
-    setTimeout(() => {
-      bot.queue('player_action', {
-        runtime_id: bot.entity.runtime_id,
-        action: 2, // STOP_SNEAK
-        position: bot.entity.position,
-        result_position: bot.entity.position
-      });
-    }, 250);
-
-    console.log(`[AFK] ${name} keep-alive pulse`);
-  }, 90 * 1000); // every 90 seconds (SAFE)
+    bot.entity.position = newPos;
+    tick++;
+    if (tick % 20 === 0) console.log(`[Walk] New pos: x=${newX.toFixed(2)} z=${newZ.toFixed(2)}`);
+  }, 500); // every 0.5s
 }
-
-/* ======================
-   ROTATION LOGIC
-   ====================== */
-function startRotation() {
-  // Start BOT A
-  activeName = 'BOT_A';
-  activeBot = createBot(BOT_A, 'BOT_A');
-
-  // First switch after 15 minutes
-  setTimeout(() => {
-    stopBot();
-
-    setTimeout(() => {
-      activeName = 'BOT_B';
-      activeBot = createBot(BOT_B, 'BOT_B');
-    }, SWITCH_COOLDOWN);
-
-  }, SWITCH_TIME);
-
-  // Continue rotation every 18 minutes
-  setInterval(() => {
-    stopBot();
-
-    setTimeout(() => {
-      if (activeName === 'BOT_A') {
-        activeName = 'BOT_B';
-        activeBot = createBot(BOT_B, 'BOT_B');
-      } else {
-        activeName = 'BOT_A';
-        activeBot = createBot(BOT_A, 'BOT_A');
-      }
-    }, SWITCH_COOLDOWN);
-
-  }, JOIN_TIME);
-}
-
-/* ======================
-   START EVERYTHING
-   ====================== */
-startRotation();
