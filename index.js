@@ -1,5 +1,4 @@
-const { createClient } = require('bedrock-protocol')
-const http = require('http')
+const { createClient } = require('bedrock-protocol');
 
 /* ======================
    CONFIG
@@ -7,157 +6,155 @@ const http = require('http')
 const BASE_CONFIG = {
   host: 'kupaleros-rg1D.aternos.me',
   port: 40915,
-  version: '1.21.120',
-  offline: true
-}
+  offline: true,
+  version: '1.21.120'
+};
 
-const BOT_A = { ...BASE_CONFIG, username: 'Noxella' }
-const BOT_B = { ...BASE_CONFIG, username: 'Noxellb' }
+const BOT_A = { ...BASE_CONFIG, username: 'Noxell' };
+const BOT_B = { ...BASE_CONFIG, username: 'Noxell_2' };
 
-const JOIN_TIME = 18 * 60 * 1000   // 18 minutes
-const SWITCH_TIME = 15 * 60 * 1000 // 15 minutes
-const RECONNECT_DELAY = 15000     // 15 sec
-
-let activeBot = null
-let activeName = null
-let activeConfig = null
-
-let walkInterval = null
-let reconnectTimer = null
-let intentionalStop = false
+const JOIN_TIME = 18 * 60 * 1000;   // 18 minutes
+const SWITCH_TIME = 15 * 60 * 1000; // 15 minutes
+const RECONNECT_DELAY = 15000;
 
 /* ======================
-   START BOT
+   STATE
    ====================== */
-function startBot(config, name) {
-  console.log(`🚀 Starting ${name}...`)
-  activeConfig = config
+let activeBot = null;
+let activeName = null;
+let activeConfig = null;
 
-  const bot = createClient(config)
+let walkInterval = null;
+let reconnectTimer = null;
+let intentionalStop = false;
+
+/* ======================
+   CREATE BOT (YOUR ORIGINAL LOGIC)
+   ====================== */
+function createBot(config, name) {
+  console.log(`🚀 Starting ${name}...`);
+  activeConfig = config;
+
+  const bot = createClient(config);
 
   bot.on('spawn', () => {
-    console.log(`✅ ${name} spawned`)
-    intentionalStop = false
-    startWalkLoop(bot, name)
-  })
+    console.log(`✅ ${name} spawned! Starting walk loop...`);
+    intentionalStop = false;
+    startWalkLoop(bot);
+  });
+
+  bot.on('text', p => console.log(`[${name}] ${p.message}`));
 
   const handleDisconnect = (reason) => {
-    if (intentionalStop) return
-    if (name !== activeName) return
+    if (intentionalStop) return;
+    if (name !== activeName) return;
 
-    console.log(`🔄 ${name} reconnecting in 15s... Reason:`, reason)
+    console.log(`🔄 ${name} reconnecting in 15s... Reason:`, reason);
 
-    clearTimeout(reconnectTimer)
+    clearTimeout(reconnectTimer);
     reconnectTimer = setTimeout(() => {
-      activeBot = startBot(activeConfig, activeName)
-    }, RECONNECT_DELAY)
-  }
+      activeBot = createBot(activeConfig, activeName);
+    }, RECONNECT_DELAY);
+  };
 
-  bot.on('kick', p => handleDisconnect(p.reason))
-  bot.on('error', e => handleDisconnect(e.message))
+  bot.on('kick', p => handleDisconnect(p.reason));
+  bot.on('error', e => handleDisconnect(e.message));
 
-  return bot
+  return bot;
 }
 
 /* ======================
    STOP BOT
    ====================== */
 function stopBot() {
-  if (!activeBot) return
+  if (!activeBot) return;
 
-  intentionalStop = true
-  console.log(`👋 ${activeName} leaving server`)
+  intentionalStop = true;
+  console.log(`👋 ${activeName} leaving server`);
 
-  clearInterval(walkInterval)
-  walkInterval = null
+  clearInterval(walkInterval);
+  walkInterval = null;
 
   try {
-    activeBot.disconnect()
+    activeBot.disconnect();
   } catch {}
 
-  activeBot = null
-  activeName = null
+  activeBot = null;
+  activeName = null;
 }
 
 /* ======================
-   WALK LOOP (HUMAN-LIKE)
+   YOUR ORIGINAL WALK LOOP
    ====================== */
-function startWalkLoop(bot, name) {
-  let angle = Math.random() * Math.PI * 2
+function startWalkLoop(bot) {
+  let tick = 0;
+  let angle = 0;
 
   walkInterval = setInterval(() => {
-    if (!bot?.entity?.position) return
+    if (!bot?.entity?.position) return;
 
-    const pos = bot.entity.position
-    const speed = 0.2 + Math.random() * 0.15
-    angle += (Math.random() * 0.6) - 0.3
+    const pos = bot.entity.position;
+    const speed = 0.3;
 
-    const newPos = {
-      x: pos.x + Math.cos(angle) * speed,
-      y: pos.y,
-      z: pos.z + Math.sin(angle) * speed
-    }
+    // Walk in a smooth circle (UNCHANGED)
+    angle += Math.PI / 12;
+    const newX = pos.x + Math.cos(angle) * speed;
+    const newZ = pos.z + Math.sin(angle) * speed;
+
+    const newPos = { x: newX, y: pos.y, z: newZ };
 
     bot.queue('move_player', {
       runtime_id: bot.entity.runtime_id,
       position: newPos,
       pitch: 0,
-      yaw: angle * 180 / Math.PI,
-      head_yaw: angle * 180 / Math.PI,
+      yaw: (angle * 180) / Math.PI,
+      head_yaw: (angle * 180) / Math.PI,
       mode: 0,
       on_ground: true,
       riding_runtime_id: 0,
       teleportation_cause: 0,
       teleportation_item: 0
-    })
+    });
 
-    bot.entity.position = newPos
-    console.log(`[${name} Walk] x=${newPos.x.toFixed(2)} z=${newPos.z.toFixed(2)}`)
-  }, 1500)
+    bot.entity.position = newPos;
+
+    tick++;
+    if (tick % 20 === 0) {
+      console.log(`[Walk] New pos: x=${newX.toFixed(2)} z=${newZ.toFixed(2)}`);
+    }
+  }, 500);
 }
 
 /* ======================
-   BOT ROTATION LOGIC
+   ROTATION LOGIC
    ====================== */
 function startRotation() {
   // Start BOT A
-  activeName = 'BOT_A'
-  activeBot = startBot(BOT_A, 'BOT_A')
+  activeName = 'BOT_A';
+  activeBot = createBot(BOT_A, 'BOT_A');
 
-  // Switch to BOT B after 15 minutes
+  // Switch to BOT B after 15 mins
   setTimeout(() => {
-    stopBot()
-    activeName = 'BOT_B'
-    activeBot = startBot(BOT_B, 'BOT_B')
-  }, SWITCH_TIME)
+    stopBot();
+    activeName = 'BOT_B';
+    activeBot = createBot(BOT_B, 'BOT_B');
+  }, SWITCH_TIME);
 
-  // Continue rotating every 18 minutes
+  // Continue rotating every 18 mins
   setInterval(() => {
-    stopBot()
+    stopBot();
 
     if (activeName === 'BOT_A') {
-      activeName = 'BOT_B'
-      activeBot = startBot(BOT_B, 'BOT_B')
+      activeName = 'BOT_B';
+      activeBot = createBot(BOT_B, 'BOT_B');
     } else {
-      activeName = 'BOT_A'
-      activeBot = startBot(BOT_A, 'BOT_A')
+      activeName = 'BOT_A';
+      activeBot = createBot(BOT_A, 'BOT_A');
     }
-  }, JOIN_TIME)
+  }, JOIN_TIME);
 }
 
 /* ======================
-   HTTP SERVER (RENDER)
+   START
    ====================== */
-const PORT = process.env.PORT || 3000
-
-http.createServer((req, res) => {
-  res.writeHead(200)
-  res.end('Minecraft Bedrock bot rotation running ✅')
-}).listen(PORT, '0.0.0.0', () => {
-  console.log(`🌐 HTTP server running on port ${PORT}`)
-})
-
-/* ======================
-   START EVERYTHING
-   ====================== */
-startRotation()
+startRotation();
