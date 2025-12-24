@@ -11,8 +11,9 @@ const BASE_CONFIG = {
   version: '1.21.130'
 };
 
-const BOT_A = { ...BASE_CONFIG, username: 'Noxell' };
-const BOT_B = { ...BASE_CONFIG, username: 'Noxell_2' };
+// 🔹 Use fully unique usernames to prevent Bedrock renaming issue
+const BOT_A = { ...BASE_CONFIG, username: 'Jose120' };
+const BOT_B = { ...BASE_CONFIG, username: 'Rizal465' };
 
 const RECONNECT_DELAY = 3 * 1000; // 3 seconds
 
@@ -45,7 +46,7 @@ function createBot(config, name) {
 
     clearTimeout(reconnectTimers[name]);
     reconnectTimers[name] = setTimeout(() => {
-      // Only recreate this bot, other bots remain untouched
+      // Only recreate this bot; other bots remain untouched
       bots[name] = createBot(config, name);
     }, RECONNECT_DELAY);
   };
@@ -92,7 +93,7 @@ function startAfkLoop(bot, name) {
 function startBothBots() {
   createBot(BOT_A, 'BOT_A');
 
-  // Start Bot B independently after 2 minutes
+  // Start Bot B after 2 minutes independently
   setTimeout(() => {
     createBot(BOT_B, 'BOT_B');
   }, 2 * 60 * 1000);
