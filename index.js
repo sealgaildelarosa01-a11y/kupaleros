@@ -45,6 +45,7 @@ function createBot(config, name) {
 
     clearTimeout(reconnectTimers[name]);
     reconnectTimers[name] = setTimeout(() => {
+      // Only recreate this bot, other bots remain untouched
       bots[name] = createBot(config, name);
     }, RECONNECT_DELAY);
   };
@@ -90,8 +91,8 @@ function startAfkLoop(bot, name) {
    ====================== */
 function startBothBots() {
   createBot(BOT_A, 'BOT_A');
-  
-  // Start Bot B after 2 minutes
+
+  // Start Bot B independently after 2 minutes
   setTimeout(() => {
     createBot(BOT_B, 'BOT_B');
   }, 2 * 60 * 1000);
